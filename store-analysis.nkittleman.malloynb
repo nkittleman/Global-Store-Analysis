@@ -1,0 +1,92 @@
+>>>malloy
+source: globalstore is duckdb.table('./Global-Store.csv') extend {
+    measure: profit is sum(Profit)
+}
+>>>markdown
+1. Which country is the least profitable?
+>>>markdown
+Answer: Turkey
+>>>malloy
+run: globalstore-> {
+    group_by: Country
+    aggregate: profit
+    order_by: profit asc
+}
+>>>markdown
+2. Which country is the most profitable?
+>>>markdown
+Answer: United States
+>>>malloy
+run: globalstore-> {
+    group_by: Country
+    aggregate: profit
+    order_by: profit desc
+}
+>>>markdown
+3. How much profit have we made in Japan?
+>>>markdown
+Answer: $24,328.47
+>>>malloy
+run: globalstore-> {
+    group_by: Country
+    aggregate: profit
+    where: Country = 'Japan'
+}
+>>>markdown
+4. Why are we losing money in Ireland?
+>>>markdown
+Answer: High shipping costs and poor sales performance attributable to each product, especially copiers and appliances. No products sold in Ireland are generating profit.
+>>>malloy
+run: globalstore-> {
+    group_by: `Product ID`, `Product Name`, `Shipping Cost`, Sales, `Sub-Category`
+    aggregate: profit
+    where: Country = 'Ireland'
+    order_by: profit asc
+}
+>>>markdown
+5. Which specific product (subcategory) would you recommend we rethink selling due to profitability issues?
+>>>markdown
+Answer: Tables
+>>>malloy
+run: globalstore-> {
+    group_by: `Sub-Category`
+    aggregate: profit
+    order_by: profit asc
+}
+>>>markdown
+6. If you had to pick one country to stop selling tables to, which one would you pick (based on profit)?
+>>>markdown
+Answer: United States
+>>>malloy
+run: globalstore-> {
+    group_by: Country, `Sub-Category`
+    aggregate: profit
+    where: `Sub-Category` = 'Tables'
+    order_by: profit asc
+}
+>>>markdown
+7. Which product (subcategory) has shown the best profit growth in the USA?
+>>>markdown
+Answer: Copiers
+>>>malloy
+run: globalstore-> {
+    group_by: Country, `Sub-Category`
+    aggregate: profit
+        nest: profit_growth is {
+            group_by: `Order Date`.year
+            aggregate: profit
+            limit: 100
+        }
+    where: Country = 'United States'
+    order_by: profit desc
+}
+>>>markdown
+8. What kind of trend do we typically observe in sales across the four quarters each year?
+>>>markdown
+Answer: Sales performance is weak in Q1 and significantly improves throughout the year, seeing a peak in Q4.
+>>>malloy
+# line_chart
+run: globalstore-> {
+    group_by: `Order Date`.quarter
+    aggregate: total_sales is sum(Sales)
+}
